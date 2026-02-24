@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Paul Schöpfer MSc – Professional Portfolio" />
+  <title>Paul Schöpfer MSc</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- ===== NAVIGATION ===== -->
+  <header class="site-header" id="site-header">
+    <nav class="nav container">
+      <a href="#home" class="nav-logo">Paul Schöpfer</a>
+      <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="nav-links">
+        <li><a href="#about">About</a></li>
+        <li><a href="#cv">CV</a></li>
+        <li><a href="#work">Work</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+
+    <!-- ===== HERO ===== -->
+    <section class="hero" id="home">
+      <div class="container hero-inner">
+        <div class="hero-photo-wrap">
+          <!--
+            TO DO: Replace 'assets/profile.jpg' with your actual photo file.
+            Recommended size: 400×400 px, square crop.
+          -->
+          <img
+            src="assets/profile.jpg"
+            alt="Portrait of Paul Schöpfer"
+            class="hero-photo"
+            id="hero-photo"
+            onerror="this.style.display='none'; document.getElementById('photo-placeholder').style.display='flex';"
+          />
+          <div class="photo-placeholder" id="photo-placeholder">
+            <span>PS</span>
+          </div>
+        </div>
+        <div class="hero-text">
+          <p class="hero-eyebrow">Welcome</p>
+          <h1 class="hero-name">Paul Schöpfer <span class="hero-degree">MSc</span></h1>
+          <!--
+            TO DO: Update the tagline below to match your field / specialisation.
+          -->
+          <p class="hero-tagline">Researcher &amp; Professional</p>
+          <div class="hero-cta">
+            <a href="#work" class="btn btn-primary">See My Work</a>
+            <a href="#cv" class="btn btn-secondary">Download CV</a>
+          </div>
+        </div>
+      </div>
+      <div class="hero-scroll-hint" aria-hidden="true">
+        <span>Scroll</span>
+        <svg width="16" height="24" viewBox="0 0 16 24" fill="none">
+          <rect x="1" y="1" width="14" height="22" rx="7" stroke="currentColor" stroke-width="1.5"/>
+          <circle cx="8" cy="7" r="2" fill="currentColor" class="scroll-dot"/>
+        </svg>
+      </div>
+    </section>
+
+    <!-- ===== ABOUT ===== -->
+    <section class="section" id="about">
+      <div class="container section-grid">
+        <div class="section-label">
+          <span>01</span>
+          <span>About</span>
+        </div>
+        <div class="section-content">
+          <h2 class="section-title">About Me</h2>
+          <!--
+            TO DO: Replace the placeholder text below with your own biography.
+          -->
+          <p class="lead">
+            I am a dedicated professional with an MSc, passionate about
+            [your field / research area]. My work focuses on
+            [brief description of what you do or study].
+          </p>
+          <p>
+            With a background in [relevant disciplines], I strive to
+            [your goal or mission]. I have experience in
+            [key skills or domains] and enjoy tackling complex problems
+            with rigorous, evidence-based approaches.
+          </p>
+          <p>
+            Outside of work, I am interested in [personal interests / hobbies].
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== CV ===== -->
+    <section class="section section-alt" id="cv">
+      <div class="container section-grid">
+        <div class="section-label">
+          <span>02</span>
+          <span>CV</span>
+        </div>
+        <div class="section-content">
+          <h2 class="section-title">Curriculum Vitae</h2>
+
+          <div class="cv-block">
+            <h3 class="cv-block-title">Education</h3>
+            <ul class="cv-list">
+              <!--
+                TO DO: Add your educational history below.
+                Follow the pattern: degree, institution, year(s).
+              -->
+              <li class="cv-item">
+                <div class="cv-item-meta">
+                  <strong>Master of Science (MSc)</strong>
+                  <span class="cv-year">20XX – 20XX</span>
+                </div>
+                <div class="cv-item-detail">University / Institution Name</div>
+              </li>
+              <li class="cv-item">
+                <div class="cv-item-meta">
+                  <strong>Bachelor of Science (BSc)</strong>
+                  <span class="cv-year">20XX – 20XX</span>
+                </div>
+                <div class="cv-item-detail">University / Institution Name</div>
+              </li>
+            </ul>
+          </div>
+
+          <div class="cv-block">
+            <h3 class="cv-block-title">Experience</h3>
+            <ul class="cv-list">
+              <!--
+                TO DO: Add your professional or research experience here.
+              -->
+              <li class="cv-item">
+                <div class="cv-item-meta">
+                  <strong>Position / Role Title</strong>
+                  <span class="cv-year">20XX – Present</span>
+                </div>
+                <div class="cv-item-detail">Organisation / Company Name</div>
+                <p class="cv-item-desc">
+                  Brief description of responsibilities and achievements.
+                </p>
+              </li>
+            </ul>
+          </div>
+
+          <div class="cv-block">
+            <h3 class="cv-block-title">Skills</h3>
+            <div class="skills-grid">
+              <!--
+                TO DO: Replace these with your actual skills.
+              -->
+              <span class="skill-tag">Skill One</span>
+              <span class="skill-tag">Skill Two</span>
+              <span class="skill-tag">Skill Three</span>
+              <span class="skill-tag">Skill Four</span>
+              <span class="skill-tag">Skill Five</span>
+              <span class="skill-tag">Skill Six</span>
+            </div>
+          </div>
+
+          <!--
+            TO DO: Upload your CV as 'assets/cv.pdf' to GitHub.
+            The button below will automatically link to it.
+          -->
+          <a href="assets/cv.pdf" class="btn btn-primary" download>
+            Download Full CV (PDF)
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== WORK / PROJECTS ===== -->
+    <section class="section" id="work">
+      <div class="container section-grid">
+        <div class="section-label">
+          <span>03</span>
+          <span>Work</span>
+        </div>
+        <div class="section-content">
+          <h2 class="section-title">My Work</h2>
+          <p class="lead">
+            A selection of projects, publications, and contributions.
+          </p>
+
+          <div class="work-grid">
+            <!--
+              TO DO: Replace these placeholder project cards with your actual projects.
+              Each card follows the structure below.
+            -->
+            <article class="work-card">
+              <div class="work-card-header">
+                <span class="work-tag">Project</span>
+                <span class="work-year">20XX</span>
+              </div>
+              <h3 class="work-card-title">Project Title One</h3>
+              <p class="work-card-desc">
+                A concise description of this project: what you built or
+                researched, the methods used, and the outcome or impact.
+              </p>
+              <div class="work-card-links">
+                <a href="#" class="work-link">Read more &rarr;</a>
+              </div>
+            </article>
+
+            <article class="work-card">
+              <div class="work-card-header">
+                <span class="work-tag">Publication</span>
+                <span class="work-year">20XX</span>
+              </div>
+              <h3 class="work-card-title">Publication or Paper Title</h3>
+              <p class="work-card-desc">
+                Description of the research, findings, or contribution.
+                Journal / Conference Name.
+              </p>
+              <div class="work-card-links">
+                <a href="#" class="work-link">Read paper &rarr;</a>
+              </div>
+            </article>
+
+            <article class="work-card">
+              <div class="work-card-header">
+                <span class="work-tag">Project</span>
+                <span class="work-year">20XX</span>
+              </div>
+              <h3 class="work-card-title">Project Title Two</h3>
+              <p class="work-card-desc">
+                Description of the project, tools and technologies used,
+                and what was achieved.
+              </p>
+              <div class="work-card-links">
+                <a href="#" class="work-link">Read more &rarr;</a>
+              </div>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== CONTACT ===== -->
+    <section class="section section-alt" id="contact">
+      <div class="container section-grid">
+        <div class="section-label">
+          <span>04</span>
+          <span>Contact</span>
+        </div>
+        <div class="section-content">
+          <h2 class="section-title">Get in Touch</h2>
+          <p class="lead">
+            I am open to collaboration, research inquiries, and professional
+            opportunities. Feel free to reach out.
+          </p>
+
+          <div class="contact-links">
+            <!--
+              TO DO: Replace the href values with your actual email and social links.
+            -->
+            <a href="mailto:your.email@example.com" class="contact-item">
+              <svg class="contact-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="2" y="4" width="20" height="16" rx="2"/>
+                <path d="M2 7l10 7 10-7"/>
+              </svg>
+              <span>your.email@example.com</span>
+            </a>
+            <a href="https://linkedin.com/in/your-profile" class="contact-item" target="_blank" rel="noopener">
+              <svg class="contact-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="2" y="2" width="20" height="20" rx="4"/>
+                <path d="M7 10v7M7 7v.5M12 17v-4a2 2 0 0 1 4 0v4M12 10v7"/>
+              </svg>
+              <span>LinkedIn</span>
+            </a>
+            <a href="https://github.com/PaulAGSchoepfer" class="contact-item" target="_blank" rel="noopener">
+              <svg class="contact-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+              </svg>
+              <span>GitHub</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <p>&copy; <span id="year"></span> Paul Schöpfer. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>
