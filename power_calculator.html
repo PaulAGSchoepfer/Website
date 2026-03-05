@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Statistical Power Calculator — Minimum Detectable Effect</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #ffffff;
+  --bg-input: #fffde7;
+  --bg-cluster: #e8f5e9;
+  --bg-output: #e3f2fd;
+  --bg-code: #f5f5f5;
+  --text: #1a1a1a;
+  --text-muted: #5f6368;
+  --border: #dadce0;
+  --accent: #1a73e8;
+  --accent-hover: #1558b0;
+  --radius: 8px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+}
+
+body {
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color: var(--text);
+  background: #f0f2f5;
+  line-height: 1.5;
+  font-size: 15px;
+}
+
+header {
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  padding: 20px 24px;
+  text-align: center;
+}
+header h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 4px; }
+header p { color: var(--text-muted); font-size: 0.9rem; }
+
+.container {
+  max-width: 1320px;
+  margin: 24px auto;
+  padding: 0 16px;
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+/* Panels */
+.panel {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.panel-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  padding: 16px 20px 8px;
+}
+
+/* Input panel */
+.input-group { padding: 0 20px 16px; }
+.input-group label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin-bottom: 3px;
+  margin-top: 10px;
+}
+.input-group label:first-child { margin-top: 0; }
+.help-text {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+.input-group input {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 0.9rem;
+  background: var(--bg-input);
+  transition: border-color 0.15s;
+}
+.input-group input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(26,115,232,0.15);
+}
+.input-group.cluster input { background: var(--bg-cluster); }
+.divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 14px 0 6px;
+}
+
+/* Results */
+.results-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  padding: 12px 20px 20px;
+}
+.result-card {
+  background: var(--bg-output);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+}
+.result-card h3 {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.result-card .mde-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+.result-card .mde-label {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.result-card .deff-value {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* Stata commands */
+.stata-section { padding: 0 20px 20px; }
+.stata-block {
+  position: relative;
+  background: var(--bg-code);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+.stata-block h4 {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.stata-block code {
+  display: block;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 0.82rem;
+  white-space: pre-wrap;
+  word-break: break-all;
+  color: var(--text);
+}
+.copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 0.72rem;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: background 0.15s;
+}
+.copy-btn:hover { background: var(--border); }
+
+/* Charts */
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  padding: 12px 20px 20px;
+}
+.chart-wrap {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+}
+.chart-wrap.full-width { grid-column: 1 / -1; }
+.chart-wrap canvas { width: 100% !important; }
+
+/* Sensitivity table */
+.sensitivity-section { padding: 0 20px 20px; }
+.sensitivity-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+.sensitivity-table th, .sensitivity-table td {
+  border: 1px solid var(--border);
+  padding: 6px 10px;
+  text-align: center;
+}
+.sensitivity-table th {
+  background: #f5f5f5;
+  font-weight: 600;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+}
+.sensitivity-table td.highlight {
+  background: var(--bg-output);
+  font-weight: 600;
+}
+
+/* Assumptions */
+.assumptions {
+  padding: 0 20px 20px;
+}
+.assumptions summary {
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  padding: 8px 0;
+}
+.assumptions ul {
+  margin: 8px 0 0 20px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+.assumptions li { margin-bottom: 4px; }
+
+/* CSV button */
+.export-row {
+  padding: 0 20px 16px;
+  display: flex;
+  gap: 10px;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  font-size: 0.82rem;
+  cursor: pointer;
+  color: var(--text);
+  transition: background 0.15s;
+}
+.btn:hover { background: #f0f0f0; }
+
+/* Scenario comparison */
+.scenario-section { padding: 0 20px 20px; }
+.scenario-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+.scenario-table th, .scenario-table td {
+  border: 1px solid var(--border);
+  padding: 5px 8px;
+  text-align: center;
+}
+.scenario-table th {
+  background: #f5f5f5;
+  font-weight: 600;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+.scenario-btns { margin-bottom: 10px; display: flex; gap: 8px; }
+
+/* Responsive */
+@media (max-width: 900px) {
+  .container { grid-template-columns: 1fr; }
+  .charts-grid { grid-template-columns: 1fr; }
+  .results-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Statistical Power Calculator</h1>
+  <p>Minimum Detectable Effect for Randomized Controlled Trials &mdash; based on Owen Ozier (2015)</p>
+</header>
+
+<div class="container">
+  <!-- LEFT: Inputs -->
+  <div class="panel" id="input-panel">
+    <div class="panel-title">Parameters</div>
+    <div class="input-group">
+      <label for="nt">Treatment group size (N<sub>T</sub>)</label>
+      <div class="help-text">Number of individuals in the treatment arm</div>
+      <input type="number" id="nt" value="1000" min="10" max="100000" step="1">
+
+      <label for="nc">Comparison group size (N<sub>C</sub>)</label>
+      <div class="help-text">Number of individuals in the control arm</div>
+      <input type="number" id="nc" value="1000" min="10" max="100000" step="1">
+
+      <label for="r2">Baseline R&sup2;</label>
+      <div class="help-text">Share of outcome variance explained by baseline covariates (0 = none)</div>
+      <input type="number" id="r2" value="0.00" min="0" max="0.99" step="0.01">
+
+      <label for="power">Power (1 &minus; &beta;)</label>
+      <div class="help-text">Probability of detecting a true effect; 0.80 is standard</div>
+      <input type="number" id="power" value="0.80" min="0.50" max="0.99" step="0.01">
+
+      <label for="compliance">Compliance factor</label>
+      <div class="help-text">Fraction who actually receive treatment; 1 = full compliance</div>
+      <input type="number" id="compliance" value="1.00" min="0.01" max="1.00" step="0.01">
+
+      <hr class="divider">
+    </div>
+    <div class="panel-title">Clustering</div>
+    <div class="input-group cluster">
+      <label for="icc">ICC (&rho;)</label>
+      <div class="help-text">Intra-cluster correlation; typical 0.01–0.20 in education RCTs</div>
+      <input type="number" id="icc" value="0.05" min="0" max="0.50" step="0.001">
+
+      <label for="obsclus">Observations per cluster (m)</label>
+      <div class="help-text">Average number of individuals per cluster</div>
+      <input type="number" id="obsclus" value="30" min="2" max="1000" step="1">
+    </div>
+
+    <div class="export-row">
+      <button class="btn" onclick="exportCSV()">&#x1f4e5; Export CSV</button>
+      <button class="btn" onclick="saveScenario()">&#x1f4cc; Save scenario</button>
+    </div>
+  </div>
+
+  <!-- RIGHT: Results + Charts -->
+  <div>
+    <!-- MDE Results -->
+    <div class="panel" style="margin-bottom:24px">
+      <div class="panel-title">Minimum Detectable Effects</div>
+      <div class="results-grid">
+        <div class="result-card">
+          <h3>No Clustering &mdash; Residual SDs</h3>
+          <div class="mde-value" id="mde-resid-nc">—</div>
+          <div class="mde-label">effect sizes in residual SD units</div>
+        </div>
+        <div class="result-card">
+          <h3>With Clustering &mdash; Residual SDs</h3>
+          <div class="mde-value" id="mde-resid-cl">—</div>
+          <div class="mde-label">effect sizes in residual SD units</div>
+          <div class="deff-value" id="deff-display">DEFF = —</div>
+        </div>
+        <div class="result-card">
+          <h3>No Clustering &mdash; Pre-baseline SDs</h3>
+          <div class="mde-value" id="mde-pre-nc">—</div>
+          <div class="mde-label">effect sizes in original SD units</div>
+        </div>
+        <div class="result-card">
+          <h3>With Clustering &mdash; Pre-baseline SDs</h3>
+          <div class="mde-value" id="mde-pre-cl">—</div>
+          <div class="mde-label">effect sizes in original SD units</div>
+        </div>
+      </div>
+
+      <!-- Stata commands -->
+      <div class="stata-section">
+        <div class="stata-block">
+          <h4>Stata — No Clustering</h4>
+          <code id="stata-nc"></code>
+          <button class="copy-btn" onclick="copyStata('stata-nc')">Copy</button>
+        </div>
+        <div class="stata-block">
+          <h4>Stata — With Clustering</h4>
+          <code id="stata-cl"></code>
+          <button class="copy-btn" onclick="copyStata('stata-cl')">Copy</button>
+        </div>
+      </div>
+
+      <!-- Sensitivity -->
+      <div class="sensitivity-section">
+        <div class="panel-title" style="padding:0 0 10px">MDE Sensitivity (Pre-baseline SDs, No Clustering)</div>
+        <table class="sensitivity-table" id="sensitivity-table">
+          <thead><tr><th>Total N</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <!-- Scenario comparison -->
+      <div class="scenario-section" id="scenario-section" style="display:none">
+        <div class="panel-title" style="padding:0 0 10px">Scenario Comparison</div>
+        <div class="scenario-btns">
+          <button class="btn" onclick="clearScenarios()">Clear all</button>
+        </div>
+        <table class="scenario-table" id="scenario-table">
+          <thead><tr>
+            <th>Parameter</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <!-- Assumptions -->
+      <div class="assumptions">
+        <details>
+          <summary>&#x2139;&#xfe0f; Assumptions &amp; Limitations</summary>
+          <ul>
+            <li>Two-sided test at &alpha; = 0.05 (fixed; z = 1.96).</li>
+            <li>Continuous, normally distributed outcome, standardized to SD = 1.</li>
+            <li>This tool computes MDEs given sample sizes &mdash; it does <em>not</em> compute required N given a target MDE.</li>
+            <li>Does not account for attrition, non-response, or multiple treatment arms.</li>
+            <li>Clustering formula assumes equal cluster sizes.</li>
+            <li>Stata commands are for verification; <code>sampsi</code> uses a slightly different algorithm and may yield marginally different results.</li>
+          </ul>
+        </details>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="panel">
+      <div class="panel-title">Visualizations</div>
+      <div class="charts-grid">
+        <div class="chart-wrap">
+          <canvas id="chart-power"></canvas>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="chart-mde-n"></canvas>
+        </div>
+        <div class="chart-wrap full-width">
+          <canvas id="chart-deff"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  // --- NORM.INV approximation (rational approximation of the standard normal quantile) ---
+  function normInv(p) {
+    // Beasley-Springer-Moro algorithm
+    if (p <= 0) return -Infinity;
+    if (p >= 1) return Infinity;
+    if (p === 0.5) return 0;
+
+    var a = [
+      -3.969683028665376e+01,  2.209460984245205e+02,
+      -2.759285104469687e+02,  1.383577518672690e+02,
+      -3.066479806614716e+01,  2.506628277459239e+00
+    ];
+    var b = [
+      -5.447609879822406e+01,  1.615858368580409e+02,
+      -1.556989798598866e+02,  6.680131188771972e+01,
+      -1.328068155288572e+01
+    ];
+    var c = [
+      -7.784894002430293e-03, -3.223964580411365e-01,
+      -2.400758277161838e+00, -2.549732539343734e+00,
+       4.374664141464968e+00,  2.938163982698783e+00
+    ];
+    var d = [
+       7.784695709041462e-03,  3.224671290700398e-01,
+       2.445134137142996e+00,  3.754408661907416e+00
+    ];
+
+    var pLow = 0.02425;
+    var pHigh = 1 - pLow;
+    var q, r;
+
+    if (p < pLow) {
+      q = Math.sqrt(-2 * Math.log(p));
+      return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) /
+              ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+    } else if (p <= pHigh) {
+      q = p - 0.5;
+      r = q * q;
+      return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q /
+             (((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);
+    } else {
+      q = Math.sqrt(-2 * Math.log(1 - p));
+      return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) /
+               ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+    }
+  }
+
+  // Standard normal CDF
+  function normCDF(x) {
+    var t = 1 / (1 + 0.2316419 * Math.abs(x));
+    var d = 0.3989422804014327;
+    var p = d * Math.exp(-x * x / 2) *
+            (t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274)))));
+    return x > 0 ? 1 - p : p;
+  }
+
+  // CEILING to n decimal places (like Excel CEILING with significance 0.0001)
+  function ceilTo4(value) {
+    return Math.ceil(value * 10000) / 10000;
+  }
+
+  // --- Core MDE calculation ---
+  function computeMDE(params) {
+    var nt = params.nt;
+    var nc = params.nc;
+    var r2 = params.r2;
+    var power = params.power;
+    var compliance = params.compliance;
+    var icc = params.icc;
+    var m = params.obsclus;
+
+    var se_t = 1 / Math.sqrt(nt);
+    var se_c = 1 / Math.sqrt(nc);
+    var se_diff = Math.sqrt(se_t * se_t + se_c * se_c);
+    var resid_var = 1 - r2;
+    var resid_sd = Math.sqrt(resid_var);
+    var crit_sum = 1.96 + normInv(power);
+    var r_baseline = Math.sqrt(r2);
+    var deff = Math.sqrt(1 + (m - 1) * icc);
+    var ratio_tc = nt / nc;
+
+    // MDE without clustering
+    var mde_resid_nc_raw = crit_sum * se_diff * resid_sd;
+    var mde_resid_nc = ceilTo4(mde_resid_nc_raw) / compliance;
+    var mde_pre_nc_raw = crit_sum * se_diff; // in pre-baseline SD units (SD=1), = mde_resid_nc_raw / resid_sd
+    var mde_pre_nc = ceilTo4(mde_pre_nc_raw) / compliance;
+
+    // MDE with clustering
+    var mde_resid_cl_raw = mde_resid_nc_raw * deff;
+    var mde_resid_cl = ceilTo4(mde_resid_cl_raw) / compliance;
+    var mde_pre_cl_raw = mde_pre_nc_raw * deff;
+    var mde_pre_cl = ceilTo4(mde_pre_cl_raw) / compliance;
+
+    return {
+      se_t: se_t, se_c: se_c, se_diff: se_diff,
+      resid_var: resid_var, resid_sd: resid_sd,
+      crit_sum: crit_sum, r_baseline: r_baseline,
+      deff: deff, ratio_tc: ratio_tc,
+      mde_resid_nc: mde_resid_nc,
+      mde_pre_nc: mde_pre_nc,
+      mde_resid_cl: mde_resid_cl,
+      mde_pre_cl: mde_pre_cl
+    };
+  }
+
+  // Power as a function of effect size (in pre-baseline SDs)
+  function powerForEffect(effectPreSD, params, clustered) {
+    var nt = params.nt;
+    var nc = params.nc;
+    var r2 = params.r2;
+    var compliance = params.compliance;
+    var icc = params.icc;
+    var m = params.obsclus;
+
+    var se_t = 1 / Math.sqrt(nt);
+    var se_c = 1 / Math.sqrt(nc);
+    var se_diff = Math.sqrt(se_t * se_t + se_c * se_c);
+    var resid_sd = Math.sqrt(1 - r2);
+    var deff = clustered ? Math.sqrt(1 + (m - 1) * icc) : 1;
+
+    // The MDE formula: MDE_pre = crit_sum * se_diff * deff / compliance
+    // Rearranging to solve for power given effect size:
+    // effect * compliance = (1.96 + z_beta) * se_diff * deff
+    // z_beta = (effect * compliance) / (se_diff * deff) - 1.96
+    var z_beta = (effectPreSD * compliance) / (se_diff * deff) - 1.96;
+    return normCDF(z_beta);
+  }
+
+  // MDE for a given total N (keeping ratio fixed)
+  function mdeForTotalN(totalN, params, clustered) {
+    var ratio = params.nt / (params.nt + params.nc);
+    var nt = Math.max(10, Math.round(totalN * ratio));
+    var nc = Math.max(10, totalN - nt);
+    var p = Object.assign({}, params, { nt: nt, nc: nc });
+    var r = computeMDE(p);
+    return clustered ? r.mde_pre_cl : r.mde_pre_nc;
+  }
+
+  // --- Get params from DOM ---
+  function getParams() {
+    return {
+      nt: Math.max(10, parseInt(document.getElementById('nt').value) || 1000),
+      nc: Math.max(10, parseInt(document.getElementById('nc').value) || 1000),
+      r2: Math.max(0, Math.min(0.99, parseFloat(document.getElementById('r2').value) || 0)),
+      power: Math.max(0.50, Math.min(0.99, parseFloat(document.getElementById('power').value) || 0.80)),
+      compliance: Math.max(0.01, Math.min(1, parseFloat(document.getElementById('compliance').value) || 1)),
+      icc: Math.max(0, Math.min(0.50, parseFloat(document.getElementById('icc').value) || 0)),
+      obsclus: Math.max(2, parseInt(document.getElementById('obsclus').value) || 30)
+    };
+  }
+
+  // --- Stata command strings ---
+  function stataNoClust(res, params) {
+    var mde = res.mde_pre_nc.toFixed(4);
+    var r_bl = res.r_baseline.toFixed(4);
+    var pw = params.power;
+    var ratio = res.ratio_tc.toFixed(4);
+    if (params.r2 === 0) {
+      return 'sampsi 0 ' + mde + ', sd(1) p(' + pw + ') r(' + ratio + ')';
+    }
+    return 'sampsi 0 ' + mde + ', sd(1) pre(1) r01(' + r_bl + ') p(' + pw + ') r(' + ratio + ')';
+  }
+
+  function stataClust(res, params) {
+    var mde = res.mde_pre_cl.toFixed(4);
+    var r_bl = res.r_baseline.toFixed(4);
+    var pw = params.power;
+    var ratio = res.ratio_tc.toFixed(4);
+    var line1;
+    if (params.r2 === 0) {
+      line1 = 'sampsi 0 ' + mde + ', sd(1) p(' + pw + ') r(' + ratio + ')';
+    } else {
+      line1 = 'sampsi 0 ' + mde + ', sd(1) pre(1) r01(' + r_bl + ') p(' + pw + ') r(' + ratio + ')';
+    }
+    return line1 + '\nsampclus, obsclus(' + params.obsclus + ') rho(' + params.icc + ')';
+  }
+
+  // --- Charts ---
+  var chartPower, chartMdeN, chartDeff;
+
+  function initCharts() {
+    var baseOpts = {
+      responsive: true,
+      maintainAspectRatio: true,
+      animation: { duration: 0 },
+      plugins: {
+        legend: { labels: { font: { size: 11, family: 'system-ui' }, usePointStyle: true, pointStyleWidth: 8 } }
+      },
+      scales: {
+        x: { ticks: { font: { size: 11 } }, grid: { color: '#eee' } },
+        y: { ticks: { font: { size: 11 } }, grid: { color: '#eee' } }
+      }
+    };
+
+    // Power Curve
+    chartPower = new Chart(document.getElementById('chart-power'), {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [
+          { label: 'No clustering', borderColor: '#1a73e8', backgroundColor: 'rgba(26,115,232,0.08)', borderWidth: 2, pointRadius: 0, fill: false },
+          { label: 'With clustering', borderColor: '#34a853', backgroundColor: 'rgba(52,168,83,0.08)', borderWidth: 2, pointRadius: 0, fill: false, borderDash: [5,3] },
+          { label: 'MDE (no clust.)', borderColor: '#1a73e8', borderWidth: 1.5, borderDash: [3,3], pointRadius: 0, fill: false },
+          { label: 'MDE (clustered)', borderColor: '#34a853', borderWidth: 1.5, borderDash: [3,3], pointRadius: 0, fill: false },
+          { label: 'Power threshold', borderColor: '#999', borderWidth: 1, borderDash: [4,4], pointRadius: 0, fill: false }
+        ]
+      },
+      options: Object.assign({}, baseOpts, {
+        plugins: Object.assign({}, baseOpts.plugins, {
+          title: { display: true, text: 'Power Curve', font: { size: 13, weight: '600' } }
+        }),
+        scales: {
+          x: { type: 'linear', title: { display: true, text: 'Effect size (pre-baseline SDs)', font: { size: 11 } }, ticks: { font: { size: 10 } }, grid: { color: '#eee' } },
+          y: { title: { display: true, text: 'Power', font: { size: 11 } }, min: 0, max: 1, ticks: { font: { size: 10 } }, grid: { color: '#eee' } }
+        }
+      })
+    });
+
+    // MDE vs N
+    chartMdeN = new Chart(document.getElementById('chart-mde-n'), {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [
+          { label: 'No clustering', borderColor: '#1a73e8', borderWidth: 2, pointRadius: 0, fill: false },
+          { label: 'With clustering', borderColor: '#34a853', borderWidth: 2, pointRadius: 0, fill: false, borderDash: [5,3] },
+          { label: 'Current N', borderColor: '#e8710a', backgroundColor: '#e8710a', pointRadius: 6, pointStyle: 'circle', showLine: false }
+        ]
+      },
+      options: Object.assign({}, baseOpts, {
+        plugins: Object.assign({}, baseOpts.plugins, {
+          title: { display: true, text: 'MDE vs. Sample Size', font: { size: 13, weight: '600' } }
+        }),
+        scales: {
+          x: { type: 'linear', title: { display: true, text: 'Total N', font: { size: 11 } }, ticks: { font: { size: 10 } }, grid: { color: '#eee' } },
+          y: { title: { display: true, text: 'MDE (pre-baseline SDs)', font: { size: 11 } }, min: 0, ticks: { font: { size: 10 } }, grid: { color: '#eee' } }
+        }
+      })
+    });
+
+    // DEFF
+    chartDeff = new Chart(document.getElementById('chart-deff'), {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [
+          { label: 'ICC = 0.01', borderColor: '#aaa', borderWidth: 1.5, pointRadius: 0, fill: false },
+          { label: 'ICC = 0.05', borderColor: '#1a73e8', borderWidth: 2, pointRadius: 0, fill: false },
+          { label: 'ICC = 0.10', borderColor: '#34a853', borderWidth: 2, pointRadius: 0, fill: false },
+          { label: 'ICC = 0.20', borderColor: '#ea4335', borderWidth: 2, pointRadius: 0, fill: false },
+          { label: 'Current', borderColor: '#e8710a', backgroundColor: '#e8710a', pointRadius: 7, pointStyle: 'circle', showLine: false }
+        ]
+      },
+      options: Object.assign({}, baseOpts, {
+        plugins: Object.assign({}, baseOpts.plugins, {
+          title: { display: true, text: 'Design Effect by Cluster Size and ICC', font: { size: 13, weight: '600' } }
+        }),
+        scales: {
+          x: { type: 'linear', title: { display: true, text: 'Observations per cluster (m)', font: { size: 11 } }, ticks: { font: { size: 10 } }, grid: { color: '#eee' } },
+          y: { title: { display: true, text: 'DEFF', font: { size: 11 } }, min: 1, ticks: { font: { size: 10 } }, grid: { color: '#eee' } }
+        }
+      })
+    });
+  }
+
+  function updateCharts(params, res) {
+    // 1. Power curve
+    var maxEffect = Math.max(0.5, res.mde_pre_cl * 2.2);
+    var nPoints = 80;
+    var powerNC = [], powerCL = [];
+    var xVals = [];
+    for (var i = 0; i <= nPoints; i++) {
+      var eff = (i / nPoints) * maxEffect;
+      xVals.push(eff);
+      powerNC.push({ x: eff, y: powerForEffect(eff, params, false) });
+      powerCL.push({ x: eff, y: powerForEffect(eff, params, true) });
+    }
+    chartPower.data.datasets[0].data = powerNC;
+    chartPower.data.datasets[1].data = powerCL;
+    // Vertical dashed lines at MDE
+    chartPower.data.datasets[2].data = [{ x: res.mde_pre_nc, y: 0 }, { x: res.mde_pre_nc, y: 1 }];
+    chartPower.data.datasets[3].data = [{ x: res.mde_pre_cl, y: 0 }, { x: res.mde_pre_cl, y: 1 }];
+    // Horizontal at power
+    chartPower.data.datasets[4].data = [{ x: 0, y: params.power }, { x: maxEffect, y: params.power }];
+    chartPower.update();
+
+    // 2. MDE vs N
+    var totalN = params.nt + params.nc;
+    var nMin = Math.max(20, Math.round(totalN * 0.1));
+    var nMax = Math.round(totalN * 5);
+    var nStep = Math.max(1, Math.round((nMax - nMin) / 80));
+    var mdeNC = [], mdeCL = [];
+    for (var n = nMin; n <= nMax; n += nStep) {
+      mdeNC.push({ x: n, y: mdeForTotalN(n, params, false) });
+      mdeCL.push({ x: n, y: mdeForTotalN(n, params, true) });
+    }
+    chartMdeN.data.datasets[0].data = mdeNC;
+    chartMdeN.data.datasets[1].data = mdeCL;
+    chartMdeN.data.datasets[2].data = [{ x: totalN, y: res.mde_pre_nc }];
+    chartMdeN.update();
+
+    // 3. DEFF
+    var iccVals = [0.01, 0.05, 0.10, 0.20];
+    var mRange = [];
+    for (var mv = 2; mv <= 200; mv += 2) mRange.push(mv);
+    for (var j = 0; j < 4; j++) {
+      var data = [];
+      for (var k = 0; k < mRange.length; k++) {
+        data.push({ x: mRange[k], y: Math.sqrt(1 + (mRange[k] - 1) * iccVals[j]) });
+      }
+      chartDeff.data.datasets[j].data = data;
+    }
+    chartDeff.data.datasets[4].data = [{ x: params.obsclus, y: res.deff }];
+    chartDeff.update();
+  }
+
+  // --- Sensitivity table ---
+  function updateSensitivity(params, res) {
+    var totalN = params.nt + params.nc;
+    var nVals = [100, 250, 500, 750, 1000, 1500, 2000, 3000, 5000];
+    // Make sure current N is included
+    if (nVals.indexOf(totalN) === -1) {
+      nVals.push(totalN);
+      nVals.sort(function(a,b){ return a - b; });
+    }
+
+    var thead = '<tr><th>Total N</th>';
+    var r2Vals = [0, 0.1, 0.2, 0.3, 0.5];
+    for (var i = 0; i < r2Vals.length; i++) {
+      thead += '<th>R\u00b2 = ' + r2Vals[i].toFixed(1) + '</th>';
+    }
+    thead += '</tr>';
+    document.querySelector('#sensitivity-table thead').innerHTML = thead;
+
+    var tbody = '';
+    for (var j = 0; j < nVals.length; j++) {
+      var n = nVals[j];
+      var isCurrentN = (n === totalN);
+      tbody += '<tr>';
+      tbody += '<td' + (isCurrentN ? ' class="highlight"' : '') + '>' + n.toLocaleString() + '</td>';
+      for (var k = 0; k < r2Vals.length; k++) {
+        var p = Object.assign({}, params, { r2: r2Vals[k] });
+        var ratio = params.nt / (params.nt + params.nc);
+        p.nt = Math.max(10, Math.round(n * ratio));
+        p.nc = Math.max(10, n - p.nt);
+        var r = computeMDE(p);
+        var val = r.mde_pre_nc;
+        var isHighlight = isCurrentN && Math.abs(r2Vals[k] - params.r2) < 0.001;
+        tbody += '<td' + (isHighlight ? ' class="highlight"' : '') + '>' + val.toFixed(4) + '</td>';
+      }
+      tbody += '</tr>';
+    }
+    document.querySelector('#sensitivity-table tbody').innerHTML = tbody;
+  }
+
+  // --- Scenario comparison ---
+  var scenarios = [];
+
+  window.saveScenario = function() {
+    if (scenarios.length >= 3) {
+      alert('Maximum 3 scenarios. Clear to add more.');
+      return;
+    }
+    var params = getParams();
+    var res = computeMDE(params);
+    scenarios.push({ params: params, res: res, label: 'Scenario ' + (scenarios.length + 1) });
+    renderScenarios();
+  };
+
+  window.clearScenarios = function() {
+    scenarios = [];
+    document.getElementById('scenario-section').style.display = 'none';
+  };
+
+  function renderScenarios() {
+    if (scenarios.length === 0) {
+      document.getElementById('scenario-section').style.display = 'none';
+      return;
+    }
+    document.getElementById('scenario-section').style.display = 'block';
+    var thead = '<tr><th>Parameter</th>';
+    for (var i = 0; i < scenarios.length; i++) {
+      thead += '<th>' + scenarios[i].label + '</th>';
+    }
+    thead += '</tr>';
+    document.querySelector('#scenario-table thead').innerHTML = thead;
+
+    var rows = [
+      ['N_T', function(s){ return s.params.nt; }],
+      ['N_C', function(s){ return s.params.nc; }],
+      ['R\u00b2', function(s){ return s.params.r2.toFixed(2); }],
+      ['Power', function(s){ return s.params.power.toFixed(2); }],
+      ['Compliance', function(s){ return s.params.compliance.toFixed(2); }],
+      ['ICC', function(s){ return s.params.icc.toFixed(3); }],
+      ['Obs/cluster', function(s){ return s.params.obsclus; }],
+      ['MDE (pre-SD, no clust.)', function(s){ return s.res.mde_pre_nc.toFixed(4); }],
+      ['MDE (pre-SD, clustered)', function(s){ return s.res.mde_pre_cl.toFixed(4); }],
+      ['DEFF', function(s){ return s.res.deff.toFixed(4); }]
+    ];
+
+    var tbody = '';
+    for (var j = 0; j < rows.length; j++) {
+      tbody += '<tr><td style="text-align:left;font-weight:600">' + rows[j][0] + '</td>';
+      for (var k = 0; k < scenarios.length; k++) {
+        tbody += '<td>' + rows[j][1](scenarios[k]) + '</td>';
+      }
+      tbody += '</tr>';
+    }
+    document.querySelector('#scenario-table tbody').innerHTML = tbody;
+  }
+
+  // --- CSV export ---
+  window.exportCSV = function() {
+    var params = getParams();
+    var res = computeMDE(params);
+    var lines = [
+      'Parameter,Value',
+      'N_T,' + params.nt,
+      'N_C,' + params.nc,
+      'Baseline R2,' + params.r2,
+      'Power,' + params.power,
+      'Compliance,' + params.compliance,
+      'ICC,' + params.icc,
+      'Obs per cluster,' + params.obsclus,
+      '',
+      'Result,Value',
+      'MDE residual SDs (no clustering),' + res.mde_resid_nc.toFixed(4),
+      'MDE pre-baseline SDs (no clustering),' + res.mde_pre_nc.toFixed(4),
+      'MDE residual SDs (clustered),' + res.mde_resid_cl.toFixed(4),
+      'MDE pre-baseline SDs (clustered),' + res.mde_pre_cl.toFixed(4),
+      'DEFF,' + res.deff.toFixed(4),
+      '',
+      'Stata (no clustering),"' + stataNoClust(res, params) + '"',
+      'Stata (clustered),"' + stataClust(res, params).replace('\n', ' | ') + '"'
+    ];
+    var blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'power_calculator_results.csv';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
+  // --- Copy ---
+  window.copyStata = function(id) {
+    var text = document.getElementById(id).textContent;
+    navigator.clipboard.writeText(text).then(function() {
+      var btn = document.getElementById(id).parentElement.querySelector('.copy-btn');
+      btn.textContent = 'Copied!';
+      setTimeout(function() { btn.textContent = 'Copy'; }, 1500);
+    });
+  };
+
+  // --- Main update ---
+  function update() {
+    var params = getParams();
+    var res = computeMDE(params);
+
+    document.getElementById('mde-resid-nc').textContent = res.mde_resid_nc.toFixed(4);
+    document.getElementById('mde-resid-cl').textContent = res.mde_resid_cl.toFixed(4);
+    document.getElementById('mde-pre-nc').textContent = res.mde_pre_nc.toFixed(4);
+    document.getElementById('mde-pre-cl').textContent = res.mde_pre_cl.toFixed(4);
+    document.getElementById('deff-display').textContent = 'DEFF = ' + res.deff.toFixed(4);
+
+    document.getElementById('stata-nc').textContent = stataNoClust(res, params);
+    document.getElementById('stata-cl').textContent = stataClust(res, params);
+
+    updateCharts(params, res);
+    updateSensitivity(params, res);
+  }
+
+  // --- Init ---
+  initCharts();
+  update();
+
+  // Listen on all inputs
+  var inputs = document.querySelectorAll('#input-panel input');
+  for (var i = 0; i < inputs.length; i++) {
+    inputs[i].addEventListener('input', update);
+  }
+
+})();
+</script>
+</body>
+</html>
