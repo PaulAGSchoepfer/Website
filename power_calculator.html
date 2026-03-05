@@ -462,11 +462,8 @@ header p { color: var(--text-muted); font-size: 0.9rem; }
         <div class="chart-wrap">
           <canvas id="chart-power"></canvas>
         </div>
-        <div class="chart-wrap">
-          <canvas id="chart-mde-n"></canvas>
-        </div>
         <div class="chart-wrap full-width">
-          <canvas id="chart-deff"></canvas>
+          <canvas id="chart-cluster-mde"></canvas>
         </div>
       </div>
     </div>
@@ -578,7 +575,8 @@ header p { color: var(--text-muted); font-size: 0.9rem; }
       mde_resid_nc: mde_resid_nc,
       mde_pre_nc: mde_pre_nc,
       mde_resid_cl: mde_resid_cl,
-      mde_pre_cl: mde_pre_cl
+      mde_pre_cl: mde_pre_cl,
+      mde_pre_nc_raw: mde_pre_nc_raw
     };
   }
 
@@ -655,7 +653,7 @@ header p { color: var(--text-muted); font-size: 0.9rem; }
   }
 
   // --- Charts ---
-  var chartPower, chartMdeN, chartDeff;
+  var chartPower, chartDeff;
 
   function initCharts() {
     var baseOpts = {
@@ -695,48 +693,25 @@ header p { color: var(--text-muted); font-size: 0.9rem; }
       })
     });
 
-    // MDE vs N
-    chartMdeN = new Chart(document.getElementById('chart-mde-n'), {
+    // Clustered MDE by Cluster Size & ICC
+    chartDeff = new Chart(document.getElementById('chart-cluster-mde'), {
       type: 'line',
       data: {
-        labels: [],
-        datasets: [
-          { label: 'No clustering', borderColor: '#1a73e8', borderWidth: 2, pointRadius: 0, fill: false },
-          { label: 'With clustering', borderColor: '#34a853', borderWidth: 2, pointRadius: 0, fill: false, borderDash: [5,3] },
-          { label: 'Current N', borderColor: '#e8710a', backgroundColor: '#e8710a', pointRadius: 6, pointStyle: 'circle', showLine: false }
-        ]
-      },
-      options: Object.assign({}, baseOpts, {
-        plugins: Object.assign({}, baseOpts.plugins, {
-          title: { display: true, text: 'MDE vs. Sample Size', font: { size: 13, weight: '600' } }
-        }),
-        scales: {
-          x: { type: 'linear', title: { display: true, text: 'Total N', font: { size: 11 } }, ticks: { font: { size: 10 } }, grid: { color: '#eee' } },
-          y: { title: { display: true, text: 'MDE (pre-baseline SDs)', font: { size: 11 } }, min: 0, ticks: { font: { size: 10 } }, grid: { color: '#eee' } }
-        }
-      })
-    });
-
-    // DEFF
-    chartDeff = new Chart(document.getElementById('chart-deff'), {
-      type: 'line',
-      data: {
-        labels: [],
         datasets: [
           { label: 'ICC = 0.01', borderColor: '#aaa', borderWidth: 1.5, pointRadius: 0, fill: false },
           { label: 'ICC = 0.05', borderColor: '#1a73e8', borderWidth: 2, pointRadius: 0, fill: false },
           { label: 'ICC = 0.10', borderColor: '#34a853', borderWidth: 2, pointRadius: 0, fill: false },
           { label: 'ICC = 0.20', borderColor: '#ea4335', borderWidth: 2, pointRadius: 0, fill: false },
-          { label: 'Current', borderColor: '#e8710a', backgroundColor: '#e8710a', pointRadius: 7, pointStyle: 'circle', showLine: false }
+          { label: 'Current design', borderColor: '#e8710a', backgroundColor: '#e8710a', pointRadius: 8, pointStyle: 'circle', showLine: false }
         ]
       },
       options: Object.assign({}, baseOpts, {
         plugins: Object.assign({}, baseOpts.plugins, {
-          title: { display: true, text: 'Design Effect by Cluster Size and ICC', font: { size: 13, weight: '600' } }
+          title: { display: true, text: 'Clustered MDE by Cluster Size & ICC (pre-baseline SDs)', font: { size: 13, weight: '600' } }
         }),
         scales: {
           x: { type: 'linear', title: { display: true, text: 'Observations per cluster (m)', font: { size: 11 } }, ticks: { font: { size: 10 } }, grid: { color: '#eee' } },
-          y: { title: { display: true, text: 'DEFF', font: { size: 11 } }, min: 1, ticks: { font: { size: 10 } }, grid: { color: '#eee' } }
+          y: { title: { display: true, text: 'MDE (pre-baseline SDs)', font: { size: 11 } }, min: 0, ticks: { font: { size: 10 } }, grid: { color: '#eee' } }
         }
       })
     });
@@ -763,33 +738,23 @@ header p { color: var(--text-muted); font-size: 0.9rem; }
     chartPower.data.datasets[4].data = [{ x: 0, y: params.power }, { x: maxEffect, y: params.power }];
     chartPower.update();
 
-    // 2. MDE vs N
-    var totalN = params.nt + params.nc;
-    var nMin = Math.max(20, Math.round(totalN * 0.1));
-    var nMax = Math.round(totalN * 5);
-    var nStep = Math.max(1, Math.round((nMax - nMin) / 80));
-    var mdeNC = [], mdeCL = [];
-    for (var n = nMin; n <= nMax; n += nStep) {
-      mdeNC.push({ x: n, y: mdeForTotalN(n, params, false) });
-      mdeCL.push({ x: n, y: mdeForTotalN(n, params, true) });
-    }
-    chartMdeN.data.datasets[0].data = mdeNC;
-    chartMdeN.data.datasets[1].data = mdeCL;
-    chartMdeN.data.datasets[2].data = [{ x: totalN, y: res.mde_pre_nc }];
-    chartMdeN.update();
-
-    // 3. DEFF
+    // 2. Clustered MDE by cluster size and ICC
     var iccVals = [0.01, 0.05, 0.10, 0.20];
     var mRange = [];
     for (var mv = 2; mv <= 200; mv += 2) mRange.push(mv);
     for (var j = 0; j < 4; j++) {
-      var data = [];
+      var icc_j = iccVals[j];
+      var lineData = [];
       for (var k = 0; k < mRange.length; k++) {
-        data.push({ x: mRange[k], y: Math.sqrt(1 + (mRange[k] - 1) * iccVals[j]) });
+        var m_k = mRange[k];
+        var deff_jk = Math.sqrt(1 + (m_k - 1) * icc_j);
+        var mde_jk = res.mde_pre_nc_raw * deff_jk / params.compliance;
+        lineData.push({ x: m_k, y: Math.round(mde_jk * 10000) / 10000 });
       }
-      chartDeff.data.datasets[j].data = data;
+      chartDeff.data.datasets[j].data = lineData;
     }
-    chartDeff.data.datasets[4].data = [{ x: params.obsclus, y: res.deff }];
+    // Current design dot
+    chartDeff.data.datasets[4].data = [{ x: params.obsclus, y: res.mde_pre_cl }];
     chartDeff.update();
   }
 
