@@ -136,6 +136,43 @@ header p { color: var(--text-muted); font-size: 0.9rem; }
   color: var(--text-muted);
   margin-top: 4px;
 }
+.result-card-primary {
+  background: #d0e4fd;
+}
+.result-card-secondary {
+  background: #f5f5f5;
+}
+.result-card-secondary .mde-value {
+  font-size: 1.1rem;
+  color: var(--text-muted);
+}
+.result-card-secondary .mde-label {
+  color: var(--text-muted);
+}
+.result-pill {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--accent);
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-bottom: 4px;
+}
+.result-pill-muted {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--border);
+  color: var(--text-muted);
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-bottom: 4px;
+}
 
 /* Stata commands */
 .stata-section { padding: 0 20px 20px; }
@@ -192,31 +229,6 @@ header p { color: var(--text-muted); font-size: 0.9rem; }
 }
 .chart-wrap.full-width { grid-column: 1 / -1; }
 .chart-wrap canvas { width: 100% !important; }
-
-/* Sensitivity table */
-.sensitivity-section { padding: 0 20px 20px; }
-.sensitivity-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.82rem;
-}
-.sensitivity-table th, .sensitivity-table td {
-  border: 1px solid var(--border);
-  padding: 6px 10px;
-  text-align: center;
-}
-.sensitivity-table th {
-  background: #f5f5f5;
-  font-weight: 600;
-  font-size: 0.78rem;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  color: var(--text-muted);
-}
-.sensitivity-table td.highlight {
-  background: var(--bg-output);
-  font-weight: 600;
-}
 
 /* Assumptions */
 .assumptions {
@@ -342,26 +354,31 @@ header p { color: var(--text-muted); font-size: 0.9rem; }
     <div class="panel" style="margin-bottom:24px">
       <div class="panel-title">Minimum Detectable Effects</div>
       <div class="results-grid">
-        <div class="result-card">
-          <h3>No Clustering &mdash; Residual SDs</h3>
-          <div class="mde-value" id="mde-resid-nc">—</div>
-          <div class="mde-label">effect sizes in residual SD units</div>
-        </div>
-        <div class="result-card">
-          <h3>With Clustering &mdash; Residual SDs</h3>
-          <div class="mde-value" id="mde-resid-cl">—</div>
-          <div class="mde-label">effect sizes in residual SD units</div>
-          <div class="deff-value" id="deff-display">DEFF = —</div>
-        </div>
-        <div class="result-card">
-          <h3>No Clustering &mdash; Pre-baseline SDs</h3>
-          <div class="mde-value" id="mde-pre-nc">—</div>
+        <div class="result-card result-card-primary">
+          <h3>MDE &mdash; No Clustering</h3>
+          <span class="result-pill">Pre-baseline SDs</span>
+          <div class="mde-value" style="font-size:2rem;" id="mde-pre-nc">&mdash;</div>
           <div class="mde-label">effect sizes in original SD units</div>
         </div>
-        <div class="result-card">
-          <h3>With Clustering &mdash; Pre-baseline SDs</h3>
-          <div class="mde-value" id="mde-pre-cl">—</div>
+        <div class="result-card result-card-primary">
+          <h3>MDE &mdash; Clustered</h3>
+          <span class="result-pill">Pre-baseline SDs</span>
+          <div class="mde-value" style="font-size:2rem;" id="mde-pre-cl">&mdash;</div>
           <div class="mde-label">effect sizes in original SD units</div>
+          <div class="deff-value" id="deff-display">DEFF = &mdash;</div>
+        </div>
+        <div style="grid-column:1/-1; font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Also expressed in residual SD units:</div>
+        <div class="result-card result-card-secondary">
+          <h3>No Clustering</h3>
+          <span class="result-pill-muted">Residual SDs</span>
+          <div class="mde-value" id="mde-resid-nc">&mdash;</div>
+          <div class="mde-label">effect sizes in residual SD units</div>
+        </div>
+        <div class="result-card result-card-secondary">
+          <h3>With Clustering</h3>
+          <span class="result-pill-muted">Residual SDs</span>
+          <div class="mde-value" id="mde-resid-cl">&mdash;</div>
+          <div class="mde-label">effect sizes in residual SD units</div>
         </div>
       </div>
 
@@ -377,15 +394,6 @@ header p { color: var(--text-muted); font-size: 0.9rem; }
           <code id="stata-cl"></code>
           <button class="copy-btn" onclick="copyStata('stata-cl')">Copy</button>
         </div>
-      </div>
-
-      <!-- Sensitivity -->
-      <div class="sensitivity-section">
-        <div class="panel-title" style="padding:0 0 10px">MDE Sensitivity (Pre-baseline SDs, No Clustering)</div>
-        <table class="sensitivity-table" id="sensitivity-table">
-          <thead><tr><th>Total N</th></tr></thead>
-          <tbody></tbody>
-        </table>
       </div>
 
       <!-- Scenario comparison -->
@@ -415,6 +423,35 @@ header p { color: var(--text-muted); font-size: 0.9rem; }
             <li>Stata commands are for verification; <code>sampsi</code> uses a slightly different algorithm and may yield marginally different results.</li>
           </ul>
         </details>
+      </div>
+    </div>
+
+    <!-- Slider MDE Chart -->
+    <div class="panel" style="margin-bottom: 16px;">
+      <div class="panel-title">MDE vs. Total Sample Size</div>
+      <div style="padding: 0 20px 20px;">
+        <div style="display:flex; align-items:center; gap:16px; margin-bottom:12px;">
+          <label style="font-size:0.85rem; font-weight:600; white-space:nowrap;">
+            Total N: <span id="slider-n-label" style="color: var(--accent);">2000</span>
+          </label>
+          <input type="range" id="slider-n" min="50" max="20000" step="50" value="2000"
+                 style="flex:1; accent-color: var(--accent);">
+        </div>
+        <div style="display:flex; gap:24px; margin-bottom:12px;">
+          <div style="background:var(--bg-output); border-radius:var(--radius); padding:10px 16px; flex:1; text-align:center;">
+            <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-muted);">MDE (No Clustering)</div>
+            <div id="slider-mde-nc" style="font-size:1.4rem; font-weight:700; color:var(--accent);">&mdash;</div>
+            <div style="font-size:0.72rem; color:var(--text-muted);">pre-baseline SDs</div>
+          </div>
+          <div style="background:#e8f5e9; border-radius:var(--radius); padding:10px 16px; flex:1; text-align:center;">
+            <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-muted);">MDE (Clustered)</div>
+            <div id="slider-mde-cl" style="font-size:1.4rem; font-weight:700; color:#388e3c;">&mdash;</div>
+            <div style="font-size:0.72rem; color:var(--text-muted);">pre-baseline SDs</div>
+          </div>
+        </div>
+        <div class="chart-wrap" style="border:none; padding:0;">
+          <canvas id="chart-slider-mde"></canvas>
+        </div>
       </div>
     </div>
 
@@ -756,43 +793,89 @@ header p { color: var(--text-muted); font-size: 0.9rem; }
     chartDeff.update();
   }
 
-  // --- Sensitivity table ---
-  function updateSensitivity(params, res) {
-    var totalN = params.nt + params.nc;
-    var nVals = [100, 250, 500, 750, 1000, 1500, 2000, 3000, 5000];
-    // Make sure current N is included
-    if (nVals.indexOf(totalN) === -1) {
-      nVals.push(totalN);
-      nVals.sort(function(a,b){ return a - b; });
-    }
+  // --- Slider MDE chart ---
+  var chartSliderMde;
+  var lastInputTotalN = 2000; // track when input N changes
 
-    var thead = '<tr><th>Total N</th>';
-    var r2Vals = [0, 0.1, 0.2, 0.3, 0.5];
-    for (var i = 0; i < r2Vals.length; i++) {
-      thead += '<th>R\u00b2 = ' + r2Vals[i].toFixed(1) + '</th>';
-    }
-    thead += '</tr>';
-    document.querySelector('#sensitivity-table thead').innerHTML = thead;
-
-    var tbody = '';
-    for (var j = 0; j < nVals.length; j++) {
-      var n = nVals[j];
-      var isCurrentN = (n === totalN);
-      tbody += '<tr>';
-      tbody += '<td' + (isCurrentN ? ' class="highlight"' : '') + '>' + n.toLocaleString() + '</td>';
-      for (var k = 0; k < r2Vals.length; k++) {
-        var p = Object.assign({}, params, { r2: r2Vals[k] });
-        var ratio = params.nt / (params.nt + params.nc);
-        p.nt = Math.max(10, Math.round(n * ratio));
-        p.nc = Math.max(10, n - p.nt);
-        var r = computeMDE(p);
-        var val = r.mde_pre_nc;
-        var isHighlight = isCurrentN && Math.abs(r2Vals[k] - params.r2) < 0.001;
-        tbody += '<td' + (isHighlight ? ' class="highlight"' : '') + '>' + val.toFixed(4) + '</td>';
+  function initSliderChart() {
+    chartSliderMde = new Chart(document.getElementById('chart-slider-mde'), {
+      type: 'line',
+      data: {
+        datasets: [
+          { label: 'No clustering', borderColor: '#1a73e8', borderWidth: 2, pointRadius: 0, fill: false },
+          { label: 'With clustering', borderColor: '#34a853', borderWidth: 2, pointRadius: 0, fill: false, borderDash: [5, 3] },
+          { label: 'Selected N', borderColor: '#999', borderWidth: 1.5, borderDash: [4, 4], pointRadius: 0, fill: false }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        animation: { duration: 0 },
+        plugins: {
+          legend: { labels: { font: { size: 11, family: 'system-ui' }, usePointStyle: true, pointStyleWidth: 8 } },
+          title: { display: true, text: 'MDE vs. Total Sample Size (Slider)', font: { size: 13, weight: '600' } }
+        },
+        scales: {
+          x: { type: 'linear', title: { display: true, text: 'Total N', font: { size: 11 } }, ticks: { font: { size: 10 } }, grid: { color: '#eee' } },
+          y: { title: { display: true, text: 'MDE (pre-baseline SDs)', font: { size: 11 } }, min: 0, ticks: { font: { size: 10 } }, grid: { color: '#eee' } }
+        }
       }
-      tbody += '</tr>';
+    });
+  }
+
+  function updateSliderChart(params) {
+    var totalN = params.nt + params.nc;
+    var slider = document.getElementById('slider-n');
+    var sliderMax = Math.max(20000, totalN * 3);
+    slider.max = sliderMax;
+
+    // If input total N changed, reset slider to current total N
+    if (totalN !== lastInputTotalN) {
+      slider.value = totalN;
+      lastInputTotalN = totalN;
     }
-    document.querySelector('#sensitivity-table tbody').innerHTML = tbody;
+
+    var ratio = params.nt / params.nc;
+
+    // Build chart line data from 50 to sliderMax
+    var nStep = Math.max(50, Math.round(sliderMax / 100));
+    var mdeNC = [], mdeCL = [];
+    for (var n = 50; n <= sliderMax; n += nStep) {
+      var n_t_s = n * ratio / (1 + ratio);
+      var n_c_s = n / (1 + ratio);
+      var p = Object.assign({}, params, { nt: Math.max(10, Math.round(n_t_s)), nc: Math.max(10, Math.round(n_c_s)) });
+      var r = computeMDE(p);
+      mdeNC.push({ x: n, y: r.mde_pre_nc });
+      mdeCL.push({ x: n, y: r.mde_pre_cl });
+    }
+    chartSliderMde.data.datasets[0].data = mdeNC;
+    chartSliderMde.data.datasets[1].data = mdeCL;
+
+    // Update slider readout
+    updateSliderReadout(params);
+
+    chartSliderMde.update();
+  }
+
+  function updateSliderReadout(params) {
+    var slider = document.getElementById('slider-n');
+    var sliderN = parseInt(slider.value);
+    var ratio = params.nt / params.nc;
+
+    document.getElementById('slider-n-label').textContent = sliderN.toLocaleString();
+
+    var n_t_s = Math.max(10, Math.round(sliderN * ratio / (1 + ratio)));
+    var n_c_s = Math.max(10, Math.round(sliderN / (1 + ratio)));
+    var p = Object.assign({}, params, { nt: n_t_s, nc: n_c_s });
+    var r = computeMDE(p);
+
+    document.getElementById('slider-mde-nc').textContent = r.mde_pre_nc.toFixed(4);
+    document.getElementById('slider-mde-cl').textContent = r.mde_pre_cl.toFixed(4);
+
+    // Vertical marker line
+    var yMax = chartSliderMde.data.datasets[0].data.length > 0 ? chartSliderMde.data.datasets[0].data[0].y : 1;
+    chartSliderMde.data.datasets[2].data = [{ x: sliderN, y: 0 }, { x: sliderN, y: yMax }];
+    chartSliderMde.update();
   }
 
   // --- Scenario comparison ---
@@ -908,11 +991,12 @@ header p { color: var(--text-muted); font-size: 0.9rem; }
     document.getElementById('stata-cl').textContent = stataClust(res, params);
 
     updateCharts(params, res);
-    updateSensitivity(params, res);
+    updateSliderChart(params);
   }
 
   // --- Init ---
   initCharts();
+  initSliderChart();
   update();
 
   // Listen on all inputs
@@ -920,6 +1004,12 @@ header p { color: var(--text-muted); font-size: 0.9rem; }
   for (var i = 0; i < inputs.length; i++) {
     inputs[i].addEventListener('input', update);
   }
+
+  // Slider event — only update readout and marker, not full recalc
+  document.getElementById('slider-n').addEventListener('input', function() {
+    var params = getParams();
+    updateSliderReadout(params);
+  });
 
 })();
 </script>
