@@ -217,7 +217,7 @@ header p { color: var(--text-muted); font-size: 0.9rem; }
 /* Charts */
 .charts-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 16px;
   padding: 12px 20px 20px;
 }
@@ -226,9 +226,10 @@ header p { color: var(--text-muted); font-size: 0.9rem; }
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 12px;
+  position: relative;
+  height: 280px;
 }
-.chart-wrap.full-width { grid-column: 1 / -1; }
-.chart-wrap canvas { width: 100% !important; }
+.chart-wrap canvas { position: absolute; inset: 0; }
 
 /* Assumptions */
 .assumptions {
@@ -458,12 +459,21 @@ header p { color: var(--text-muted); font-size: 0.9rem; }
     <!-- Charts -->
     <div class="panel">
       <div class="panel-title">Visualizations</div>
+      <div style="padding: 8px 20px 0; display:flex; align-items:center; gap:12px;">
+        <span style="font-size:0.8rem; font-weight:600; color:var(--text-muted); white-space:nowrap;">
+          Chart 3 — ICC:
+        </span>
+        <input type="range" id="icc-chart-slider" min="0" max="0.5" step="0.01" value="0.05"
+               style="width:160px; accent-color:var(--accent);">
+        <span id="icc-chart-label" style="font-size:0.85rem; font-weight:700; color:var(--accent); min-width:36px;">0.05</span>
+        <span style="font-size:0.78rem; color:var(--text-muted);">(drag to explore how ICC changes the MDE curve)</span>
+      </div>
       <div class="charts-grid">
         <div class="chart-wrap">
           <canvas id="chart-power"></canvas>
         </div>
-        <div class="chart-wrap full-width">
-          <canvas id="chart-cluster-mde"></canvas>
+        <div class="chart-wrap">
+          <canvas id="chart-deff"></canvas>
         </div>
       </div>
     </div>
@@ -693,27 +703,84 @@ header p { color: var(--text-muted); font-size: 0.9rem; }
       })
     });
 
-    // Clustered MDE by Cluster Size & ICC
-    chartDeff = new Chart(document.getElementById('chart-cluster-mde'), {
+    // Cluster Size → MDE (interactive)
+    chartDeff = new Chart(document.getElementById('chart-deff'), {
       type: 'line',
       data: {
         datasets: [
-          { label: 'ICC = 0.01', borderColor: '#aaa', borderWidth: 1.5, pointRadius: 0, fill: false },
-          { label: 'ICC = 0.05', borderColor: '#1a73e8', borderWidth: 2, pointRadius: 0, fill: false },
-          { label: 'ICC = 0.10', borderColor: '#34a853', borderWidth: 2, pointRadius: 0, fill: false },
-          { label: 'ICC = 0.20', borderColor: '#ea4335', borderWidth: 2, pointRadius: 0, fill: false },
-          { label: 'Current design', borderColor: '#e8710a', backgroundColor: '#e8710a', pointRadius: 8, pointStyle: 'circle', showLine: false }
+          {
+            label: 'MDE (clustered)',
+            borderColor: '#1a73e8',
+            backgroundColor: 'rgba(26,115,232,0.08)',
+            borderWidth: 2.5,
+            pointRadius: 0,
+            fill: true
+          },
+          {
+            label: 'MDE (no clustering, for reference)',
+            borderColor: '#aaa',
+            borderWidth: 1.5,
+            borderDash: [5, 3],
+            pointRadius: 0,
+            fill: false
+          },
+          {
+            label: 'Current design',
+            borderColor: '#e8710a',
+            backgroundColor: '#e8710a',
+            pointRadius: 8,
+            pointStyle: 'circle',
+            showLine: false
+          }
         ]
       },
       options: Object.assign({}, baseOpts, {
         plugins: Object.assign({}, baseOpts.plugins, {
-          title: { display: true, text: 'Clustered MDE by Cluster Size & ICC (pre-baseline SDs)', font: { size: 13, weight: '600' } }
+          title: {
+            display: true,
+            text: 'How Cluster Size Affects MDE',
+            font: { size: 13, weight: '600' }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(ctx) {
+                if (ctx.datasetIndex === 0 || ctx.datasetIndex === 2) {
+                  var m = ctx.parsed.x;
+                  var totalN = ctx.chart._customTotalN || 2000;
+                  var nClusters = Math.round(totalN / m);
+                  return [
+                    'MDE: ' + ctx.parsed.y.toFixed(4) + ' pre-baseline SDs',
+                    'Clusters: ' + nClusters + ' \u00d7 ' + Math.round(m) + ' obs'
+                  ];
+                }
+                return 'MDE: ' + ctx.parsed.y.toFixed(4);
+              }
+            }
+          }
         }),
         scales: {
-          x: { type: 'linear', title: { display: true, text: 'Observations per cluster (m)', font: { size: 11 } }, ticks: { font: { size: 10 } }, grid: { color: '#eee' } },
-          y: { title: { display: true, text: 'MDE (pre-baseline SDs)', font: { size: 11 } }, min: 0, ticks: { font: { size: 10 } }, grid: { color: '#eee' } }
+          x: {
+            type: 'linear',
+            title: { display: true, text: 'Observations per cluster (m)', font: { size: 11 } },
+            ticks: { font: { size: 10 } },
+            grid: { color: '#eee' },
+            min: 1
+          },
+          y: {
+            title: { display: true, text: 'MDE (pre-baseline SDs)', font: { size: 11 } },
+            min: 0,
+            ticks: { font: { size: 10 } },
+            grid: { color: '#eee' }
+          }
         }
       })
+    });
+
+    document.getElementById('icc-chart-slider').addEventListener('input', function() {
+      document.getElementById('icc-chart-label').textContent = parseFloat(this.value).toFixed(2);
+      if (window._lastParams && window._lastRes) {
+        updateClusterChart(window._lastParams, window._lastRes);
+      }
     });
   }
 
@@ -738,23 +805,40 @@ header p { color: var(--text-muted); font-size: 0.9rem; }
     chartPower.data.datasets[4].data = [{ x: 0, y: params.power }, { x: maxEffect, y: params.power }];
     chartPower.update();
 
-    // 2. Clustered MDE by cluster size and ICC
-    var iccVals = [0.01, 0.05, 0.10, 0.20];
-    var mRange = [];
-    for (var mv = 2; mv <= 200; mv += 2) mRange.push(mv);
-    for (var j = 0; j < 4; j++) {
-      var icc_j = iccVals[j];
-      var lineData = [];
-      for (var k = 0; k < mRange.length; k++) {
-        var m_k = mRange[k];
-        var deff_jk = Math.sqrt(1 + (m_k - 1) * icc_j);
-        var mde_jk = res.mde_pre_nc_raw * deff_jk / params.compliance;
-        lineData.push({ x: m_k, y: Math.round(mde_jk * 10000) / 10000 });
-      }
-      chartDeff.data.datasets[j].data = lineData;
+    // 2. Cluster size → MDE (interactive)
+    window._lastParams = params;
+    window._lastRes = res;
+    updateClusterChart(params, res);
+  }
+
+  function updateClusterChart(params, res) {
+    var iccChart = parseFloat(document.getElementById('icc-chart-slider').value);
+    var totalN = params.nt + params.nc;
+
+    // X range: cluster sizes from 1 to min(totalN/2, 200), capped sensibly
+    var mMax = Math.min(Math.floor(totalN / 2), 200);
+    var step = Math.max(1, Math.floor(mMax / 100));
+    var clData = [];
+    for (var m = 1; m <= mMax; m += step) {
+      var deff_m = Math.sqrt(1 + (m - 1) * iccChart);
+      var mde_m = res.mde_pre_nc_raw * deff_m / params.compliance;
+      clData.push({ x: m, y: Math.round(mde_m * 10000) / 10000 });
     }
-    // Current design dot
-    chartDeff.data.datasets[4].data = [{ x: params.obsclus, y: res.mde_pre_cl }];
+
+    // Flat reference line at no-clustering MDE
+    var refData = [
+      { x: 1, y: res.mde_pre_nc },
+      { x: mMax, y: res.mde_pre_nc }
+    ];
+
+    // Current design dot (using the chart slider's ICC, not the input panel ICC)
+    var deff_cur = Math.sqrt(1 + (params.obsclus - 1) * iccChart);
+    var mde_cur = res.mde_pre_nc_raw * deff_cur / params.compliance;
+
+    chartDeff.data.datasets[0].data = clData;
+    chartDeff.data.datasets[1].data = refData;
+    chartDeff.data.datasets[2].data = [{ x: params.obsclus, y: Math.round(mde_cur * 10000) / 10000 }];
+    chartDeff._customTotalN = totalN;
     chartDeff.update();
   }
 
@@ -954,6 +1038,12 @@ header p { color: var(--text-muted); font-size: 0.9rem; }
 
     document.getElementById('stata-nc').textContent = stataNoClust(res, params);
     document.getElementById('stata-cl').textContent = stataClust(res, params);
+
+    if (!window._iccSliderInitialized) {
+      document.getElementById('icc-chart-slider').value = params.icc;
+      document.getElementById('icc-chart-label').textContent = params.icc.toFixed(2);
+      window._iccSliderInitialized = true;
+    }
 
     updateCharts(params, res);
     updateSliderChart(params);
